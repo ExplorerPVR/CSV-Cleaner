@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from functools import wraps
 import logging
+from pathlib import Path
 import time
 from typing import Any, Callable
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -90,3 +93,82 @@ def retry(
     if target_func is not None:
         return decorator(target_func)
     return decorator
+
+
+def clean_reviews(data: str | Path | pd.DataFrame) -> pd.DataFrame:
+    """Read a CSV of customer reviews and return a cleaned copy.
+
+    Cleaning rules:
+    - Remove rows where every field is empty or only spaces.
+    - Remove exact duplicate rows.
+    - Do not change original data; returns a new copy.
+
+    Parameters
+    ----------
+    data : str | Path | pd.DataFrame
+        Path to CSV file or DataFrame of customer reviews.
+
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned customer reviews DataFrame with reset index.
+    """
+    if isinstance(data, (str, Path)):
+        csv_path = Path(data)
+        if not csv_path.exists():
+            raise FileNotFoundError(f"CSV file not found: {csv_path}")
+        df = pd.read_csv(csv_path)
+    elif isinstance(data, pd.DataFrame):
+        df = data.copy()
+    else:
+        raise TypeError("Input data must be a file path (str, Path) or a pandas DataFrame.")
+
+    def _is_empty_or_whitespace(val: Any) -> bool:
+        if pd.isna(val):
+            return True
+        if isinstance(val, str) and val.strip() == "":
+            return True
+        return False
+
+    empty_cell_mask = df.map(_is_empty_or_whitespace)
+    all_empty_row_mask = empty_cell_mask.all(axis=1)
+
+    # Remove rows where every field is empty or only spaces
+    cleaned_df = df.loc[~all_empty_row_mask].copy()
+
+    # Remove exact duplicate rows
+    cleaned_df = cleaned_df.drop_duplicates()
+
+    # Reset index and return new copy
+    cleaned_df = cleaned_df.reset_index(drop=True)
+    return cleaned_df
+
+
+def save_cleaned_data(df: pd.DataFrame, output_path: str | Path) -> Path:
+    """Save cleaned DataFrame to a new CSV file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The cleaned customer reviews DataFrame.
+    output_path : str | Path
+        Destination path for the new CSV file.
+
+    Returns
+    -------
+    Path
+        Path to the saved CSV file.
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f"Expected pandas DataFrame, got {type(df).__name__}")
+
+    dest = Path(output_path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(dest, index=False)
+    logger.info("Saved %d cleaned rows to %s", len(df), dest)
+    return dest
+
+
+# Semantic aliases for clarity
+read_and_clean_reviews = clean_reviews
+save_cleaned_reviews = save_cleaned_data
