@@ -1,142 +1,135 @@
-# CSV-Cleaner
+# DataForge Studio (CSV-Cleaner)
 
-A clean, robust, and well-tested Python utility to process, sanitize, and clean customer review datasets using plain Python and `pandas`.
-
----
-
-## 🎯 Goal
-
-This project implements **Assignment 1: CSV Cleaning Script**. It demonstrates writing clean, deterministic, production-grade Python code without relying on LLMs. Plain code is fast, deterministic, cost-free, and reproducible.
-
-### What it does:
-1. **Reads Customer Reviews CSV**: Identifies and removes rows where every field is empty or contains only whitespace.
-2. **Deduplicates**: Removes exact duplicate rows while retaining the first occurrence.
-3. **Data Immutability**: Leaves the original data untouched and returns a new DataFrame copy with a clean index.
-4. **Saves to File**: Exports the cleaned dataset to a target CSV file (automatically creating target directories).
-5. **Resilient Retry Decorator**: Provides a `@retry` decorator that automatically re-runs functions up to $N$ times upon failure and raises the last error if all attempts fail.
-6. **Comprehensive Test Suite**: Exceeds the 5-test minimum with 10 unit and pipeline tests executed with `pytest`.
+A clean, robust, and full-featured customer reviews CSV sanitization suite powered by **Python 3.12**, **Pandas**, **Pydantic v2**, and **Streamlit**.
 
 ---
 
-## 📁 Folder Structure
+## 🎯 Overview & Key Capabilities
+
+**DataForge Studio** bridges deterministic Python data cleaning with modern interactive visual auditing:
+
+1. **Deterministic Core Engine**:
+   - Drops rows where every field is empty or whitespace-only.
+   - Eliminates duplicate rows across all columns or user-specified key subsets.
+   - Non-destructive processing (original data is never mutated).
+   - Built-in `@retry` decorator for failure recovery with exponential backoff.
+2. **Pydantic v2 Type-Safe Validation**:
+   - Validates each row through [`ReviewRowModel`](file:///src/models.py): standardizes customer names (Title Case), enforces numeric rating boundaries (`1.0` - `5.0`), strips embedded HTML tags, and collapses irregular whitespace.
+3. **Interactive Web Dashboard (Streamlit)**:
+   - **Upload & Test**: Drag-and-drop any CSV or click **"Load Demo Reviews"** for instant sample testing.
+   - **Bento Metric Grid**: Real-time KPI cards displaying raw rows, clean retained rows, purged count, and a dynamic Pydantic Quality Score.
+   - **Visual Analytics**: Interactive bar charts for dataset flow dynamics, removal reason distributions, and star rating histograms.
+   - **Side-by-Side Diff Matrix**: Live keyword search and preview slider comparing original vs. sanitized data.
+   - **Purged Records Audit**: Transparent table listing every dropped record with its exact failure reason.
+   - **Multi-Format Export**: One-click download for Cleaned CSV, Cleaned JSON, Purged Audit CSV, and Executive Markdown Audit Reports.
+
+---
+
+## 📁 Project Architecture
 
 ```text
 CSV-Cleaner/
-├── .env.example            # Environment configuration template
-├── .gitignore              # Ignores virtual envs, caches, outputs, secrets
-├── .python-version         # Python version pin (3.12)
-├── pyproject.toml          # Project metadata and dependencies via uv
-├── uv.lock                 # Deterministic dependency lockfile
-├── README.md               # Documentation and execution guide
-├── data/
-│   └── sample_reviews.csv  # Messy sample dataset (16 rows)
+├── .streamlit/
+│   └── config.toml          # Nordic Emerald custom theme & headless server settings
 ├── src/
 │   ├── __init__.py
-│   └── cleaner.py          # Cleaning functions and retry decorator
-└── tests/
-    ├── __init__.py
-    └── test_cleaner.py     # 10 comprehensive pytest test cases
+│   ├── models.py            # Pydantic v2 schemas (ReviewRowModel, CleaningOptions, CleaningStats)
+│   └── cleaner.py           # Core cleaning functions, retry decorator, and audit pipeline
+├── tests/
+│   ├── __init__.py
+│   └── test_cleaner.py      # 14 comprehensive unit, pipeline, and Pydantic tests
+├── data/
+│   └── sample_reviews.csv   # Messy sample reviews dataset (16 rows)
+├── app.py                   # Streamlit web application & visual dashboard
+├── Dockerfile               # Multi-stage production container setup
+├── pyproject.toml           # Project metadata and dependencies via uv
+├── uv.lock                  # Deterministic lockfile
+├── .gitignore               # Environment secrets, cache, and generated data
+├── .env.example             # Configuration template
+└── README.md                # Documentation and deployment guide
 ```
 
 ---
 
-## ⚙️ Installation & Setup
-
-This project uses [`uv`](https://docs.astral.sh/uv/) for fast, reproducible dependency management.
+## ⚙️ Quickstart & Local Setup
 
 ### Prerequisites
 - Python 3.12+
-- `uv` installed ([uv installation guide](https://docs.astral.sh/uv/getting-started/installation/))
+- `uv` package manager ([installation instructions](https://docs.astral.sh/uv/getting-started/installation/))
 
-### 1. Clone & Navigate to Project
-```bash
-git clone <repository-url>
-cd CSV-Cleaner
-```
-
-### 2. Configure Environment
-Copy the example environment file:
-```bash
-cp .env.example .env
-```
-*(On Windows PowerShell: `Copy-Item .env.example .env`)*
-
-### 3. Install Dependencies
-Install all production and development dependencies using `uv`:
+### 1. Install Dependencies
 ```bash
 uv sync
 ```
 
----
+### 2. Launch the Web Studio
+```bash
+uv run streamlit run app.py
+```
+Open your browser at `http://localhost:8501`.
 
-## 🚀 How to Run
-
-### 1. Run the Cleaning Pipeline Script
-Execute the script to clean `data/sample_reviews.csv` and output to `data/cleaned_reviews.csv`:
+### 3. Run Command-Line Pipeline Script
 ```bash
 uv run python src/cleaner.py
 ```
 
-**Console Output:**
-```text
---> Reading and cleaning reviews from: data/sample_reviews.csv
---> Success! 9 cleaned rows written to: data/cleaned_reviews.csv
-```
-
-### 2. Run the Test Suite
-Run the test suite with `pytest`:
-```bash
-uv run pytest
-```
-
-To run with verbose output:
+### 4. Run the Full Test Suite
 ```bash
 uv run pytest -v
 ```
 
-All 10 tests will execute and pass:
+All 14 tests will execute and pass:
 ```text
-tests/test_cleaner.py::test_retry_succeeds_after_failing PASSED          [ 10%]
-tests/test_cleaner.py::test_retry_gives_up_after_n_tries PASSED          [ 20%]
-tests/test_cleaner.py::test_retry_specific_exception_filter PASSED       [ 30%]
-tests/test_cleaner.py::test_retry_invalid_max_retries PASSED             [ 40%]
-tests/test_cleaner.py::test_remove_empty_and_whitespace_rows PASSED      [ 50%]
-tests/test_cleaner.py::test_remove_duplicate_rows PASSED                 [ 60%]
-tests/test_cleaner.py::test_clean_reviews_does_not_mutate_original PASSED [ 70%]
-tests/test_cleaner.py::test_save_cleaned_data PASSED                     [ 80%]
-tests/test_cleaner.py::test_clean_reviews_file_not_found PASSED          [ 90%]
-tests/test_cleaner.py::test_end_to_end_sample_reviews_cleaning PASSED    [100%]
+collected 14 items
+
+tests/test_cleaner.py::test_retry_succeeds_after_failing PASSED          [  7%]
+tests/test_cleaner.py::test_retry_gives_up_after_n_tries PASSED          [ 14%]
+tests/test_cleaner.py::test_retry_specific_exception_filter PASSED       [ 21%]
+tests/test_cleaner.py::test_retry_invalid_max_retries PASSED             [ 28%]
+tests/test_cleaner.py::test_remove_empty_and_whitespace_rows PASSED      [ 35%]
+tests/test_cleaner.py::test_remove_duplicate_rows PASSED                 [ 42%]
+tests/test_cleaner.py::test_clean_reviews_does_not_mutate_original PASSED [ 50%]
+tests/test_cleaner.py::test_save_cleaned_data PASSED                     [ 57%]
+tests/test_cleaner.py::test_clean_reviews_file_not_found PASSED          [ 64%]
+tests/test_cleaner.py::test_end_to_end_sample_reviews_cleaning PASSED    [ 71%]
+tests/test_cleaner.py::test_pydantic_review_model_sanitization PASSED    [ 78%]
+tests/test_cleaner.py::test_pydantic_invalid_rating_raises_error PASSED  [ 85%]
+tests/test_cleaner.py::test_audit_cleaning_pipeline_with_stats PASSED    [ 92%]
+tests/test_cleaner.py::test_dataframe_serialization_bytes PASSED         [100%]
 ```
 
 ---
 
-## 🔍 Code Walkthrough
+## 🌐 How to Host Anywhere
 
-### 1. `clean_reviews(data)`
-- Accepts either a file path (`str` or `Path`) or an in-memory `pd.DataFrame`.
-- **Empty / Whitespace Detection**: Checks every cell using `pd.isna(val) or (isinstance(val, str) and val.strip() == "")`. A row is filtered out only if **all** of its columns evaluate to empty/whitespace. Valid rows with single empty fields (e.g., an optional review comment) are preserved.
-- **Deduplication**: Calls `.drop_duplicates()` to eliminate exact redundant rows.
-- **Immutability**: Operates on a `.copy()`, ensuring the original DataFrame or input data is never mutated in-place.
+### Option A: Streamlit Community Cloud (Free 1-Click Hosting)
+1. Push your repository to GitHub.
+2. Sign in to [share.streamlit.io](https://share.streamlit.io/).
+3. Click **"New app"**, select your repository, branch (`development` or `main`), and set the main file path to `app.py`.
+4. Click **Deploy!**
 
-### 2. `save_cleaned_data(df, output_path)`
-- Ensures the destination directory exists using `dest.parent.mkdir(parents=True, exist_ok=True)`.
-- Writes the DataFrame to CSV without adding an unnecessary index column (`index=False`).
+### Option B: Docker Container Deployment (Render / Railway / AWS / VPS)
+Build and run the container locally or on any cloud platform:
 
-### 3. `@retry` Decorator
-- Configurable with `max_retries`, `delay`, `backoff`, and specific `exceptions`.
-- Re-runs the wrapped function up to $N$ total attempts upon encountering a caught exception.
-- Re-raises the final error if all $N$ attempts are exhausted.
-- Preserves the wrapped function's signature and metadata with `@functools.wraps`.
+```bash
+# Build the Docker image
+docker build -t csv-cleaner-studio .
+
+# Run the container on port 8501
+docker run -p 8501:8501 csv-cleaner-studio
+```
 
 ---
 
-## 📋 Assignment Checklist
+## 📋 Assignment & Enhancement Checklist
 
-| Item | Requirement | Status |
+| Requirement | Description | Status |
 | :--- | :--- | :---: |
-| 1 | Empty and whitespace-only rows are removed | ✅ Passed |
-| 2 | Duplicate rows are removed | ✅ Passed |
-| 3 | Retry decorator works (tests for "succeeds after failing" and "gives up after N tries") | ✅ Passed |
-| 4 | At least 5 tests pass with `uv run pytest` (10 passed) | ✅ Passed |
-| 5 | README explains how to install and run it | ✅ Passed |
-| 6 | Work merged through a PR with at least 3 small commits | ✅ Passed |
+| **Empty Rows Pruned** | Strips rows where all fields are null or whitespace | ✅ Passed |
+| **Duplicates Removed** | Eliminates exact duplicate records | ✅ Passed |
+| **Resilience Decorator** | `@retry` with test for early success and gives-up after $N$ tries | ✅ Passed |
+| **Pytest Test Suite** | 14 test cases passing via `uv run pytest` | ✅ Passed |
+| **Pydantic Validation** | Type-safe schema validation via `ReviewRowModel` | ✅ Passed |
+| **Interactive Frontend** | Modern Streamlit dashboard with Bento metrics & charts | ✅ Passed |
+| **Multi-Format Export** | Clean CSV, Clean JSON, Removed CSV, Audit Report MD | ✅ Passed |
+| **Hostable Anywhere** | Configured with `.streamlit/config.toml` & `Dockerfile` | ✅ Passed |
