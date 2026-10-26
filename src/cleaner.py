@@ -172,3 +172,20 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str | Path) -> Path:
 # Semantic aliases for clarity
 read_and_clean_reviews = clean_reviews
 save_cleaned_reviews = save_cleaned_data
+
+
+if __name__ == "__main__":
+    import sys
+
+    input_file = Path("data/sample_reviews.csv")
+    output_file = Path("data/cleaned_reviews.csv")
+
+    if not input_file.exists():
+        print(f"Error: Sample data file not found at {input_file}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"--> Reading and cleaning reviews from: {input_file}")
+    cleaned = clean_reviews(input_file)
+    saved_path = save_cleaned_data(cleaned, output_file)
+    print(f"--> Success! {len(cleaned)} cleaned rows written to: {saved_path}")
+
