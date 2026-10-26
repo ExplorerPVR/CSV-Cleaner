@@ -1,4 +1,4 @@
-# DataForge Studio (CSV-Cleaner)
+# PydanClean Studio | Smart CSV & Pydantic Sanitizer
 
 A clean, robust, and full-featured customer reviews CSV sanitization suite powered by **Python 3.12**, **Pandas**, **Pydantic v2**, and **Streamlit**.
 
