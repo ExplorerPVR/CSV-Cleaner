@@ -1,4 +1,4 @@
-"""DataForge Studio - Modern CSV Sanitizer and Pydantic Schema Validator."""
+"""PydanClean Studio - Modern CSV Sanitizer and Pydantic Schema Validation Suite."""
 
 from __future__ import annotations
 
@@ -18,191 +18,265 @@ from src.cleaner import (
 from src.models import CleaningOptions
 
 # -----------------------------------------------------------------------------
-# Streamlit Application Configuration
+# Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="DataForge Studio | Smart CSV Cleaner & Schema Validator",
-    page_icon="⚡",
+    page_title="PydanClean Studio | Smart CSV & Pydantic Sanitizer",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # -----------------------------------------------------------------------------
-# Bespoke Nordic-Emerald & Obsidian Theme Styling
+# Bespoke Titanium & Sunset Flame UI Theme Styling
 # -----------------------------------------------------------------------------
-STUDIO_CSS = """
+BESPOKE_THEME_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Space Grotesk', -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background-color: #141517;
+    color: #F4F5F7;
 }
 
-code, pre {
-    font-family: 'JetBrains Mono', monospace !important;
+code, pre, .mono {
+    font-family: 'Fira Code', monospace !important;
 }
 
-/* Studio Hero Header */
-.forge-header {
-    background: radial-gradient(120% 120% at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(20, 184, 166, 0.05) 50%, rgba(9, 13, 22, 0.95) 100%);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    border-radius: 20px;
-    padding: 30px 36px;
-    margin-bottom: 24px;
-    box-shadow: 0 12px 36px -12px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
+/* Minimalist Studio Top Bar */
+.studio-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1b1d22;
+    border: 1px solid rgba(255, 107, 53, 0.25);
+    border-radius: 14px;
+    padding: 16px 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.forge-status-row {
+.studio-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
 }
 
-.engine-chip {
-    display: inline-flex;
+.studio-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #FF6B35 0%, #F97316 100%);
+    display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #34d399;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #FFFFFF;
+    box-shadow: 0 0 16px rgba(255, 107, 53, 0.4);
 }
 
-.pydantic-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(6, 182, 212, 0.15);
-    border: 1px solid rgba(6, 182, 212, 0.35);
-    color: #22d3ee;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.forge-title {
-    font-size: 2.3rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    margin: 0 0 8px 0;
-    color: #f8fafc;
-}
-
-.forge-subtitle {
-    color: #94a3b8;
-    font-size: 1.05rem;
+.studio-title-block h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
     margin: 0;
-    font-weight: 400;
-    line-height: 1.6;
-    max-width: 900px;
+    letter-spacing: -0.02em;
+    color: #FFFFFF;
 }
 
-/* Bento Metrics Grid */
-.bento-card {
-    background: #131b2e;
+.studio-title-block p {
+    font-size: 0.82rem;
+    color: #9EACB9;
+    margin: 0;
+}
+
+.studio-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-chip {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chip-flame {
+    background: rgba(255, 107, 53, 0.15);
+    border: 1px solid rgba(255, 107, 53, 0.4);
+    color: #FF8A50;
+}
+
+.chip-gold {
+    background: rgba(255, 184, 0, 0.15);
+    border: 1px solid rgba(255, 184, 0, 0.35);
+    color: #FFC72C;
+}
+
+.chip-muted {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #CBD5E1;
+}
+
+/* Executive Metric Ribbon */
+.metric-ribbon {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    background: #1b1d22;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 22px;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
 }
 
-.bento-card:hover {
-    border-color: rgba(16, 185, 129, 0.4);
-    transform: translateY(-2px);
+.metric-node {
+    padding: 0 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.bento-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #94a3b8;
+.metric-node:last-child {
+    border-right: none;
+}
+
+.node-label {
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 6px;
+    color: #9EACB9;
+    margin-bottom: 4px;
 }
 
-.bento-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #f8fafc;
+.node-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #FFFFFF;
     line-height: 1.1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
-.bento-footer {
-    font-size: 0.8rem;
-    color: #cbd5e1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Custom Tag Badges */
-.tag-emerald {
-    color: #34d399;
-    font-weight: 600;
-}
-.tag-rose {
-    color: #f43f5e;
-    font-weight: 600;
-}
-.tag-cyan {
-    color: #38bdf8;
+.node-sub {
+    font-size: 0.78rem;
     font-weight: 600;
 }
 
-/* Custom File Uploader & Buttons */
-[data-testid="stFileUploader"] {
-    background: rgba(19, 27, 46, 0.6);
-    border: 2px dashed rgba(16, 185, 129, 0.35);
-    border-radius: 16px;
-    padding: 16px;
+.text-flame { color: #FF6B35; }
+.text-gold { color: #FFC72C; }
+.text-green { color: #10B981; }
+.text-rose { color: #F43F5E; }
+
+/* Workbench View Card */
+.workbench-card {
+    background: #1b1d22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
 }
 
-.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border: none;
-    font-weight: 600;
+/* Rule Card for Schema Diagnostics */
+.rule-card {
+    background: #22252B;
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 10px;
-    padding: 10px 20px;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    padding: 14px 18px;
+    margin-bottom: 10px;
+}
+
+.rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+}
+
+.rule-body {
+    font-size: 0.84rem;
+    color: #9EACB9;
+    line-height: 1.4;
+}
+
+/* Custom Primary Button with Flame Gradient */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #FF6B35 0%, #EA580C 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 10px 22px !important;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35) !important;
+    transition: all 0.2s ease !important;
 }
 
 .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 22px rgba(255, 107, 53, 0.5) !important;
+}
+
+/* Custom Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background: #1b1d22;
+    border-radius: 10px;
+    padding: 4px 6px;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #9EACB9;
+    border: none;
+}
+
+.stTabs [aria-selected="true"] {
+    background: rgba(255, 107, 53, 0.2) !important;
+    color: #FF8A50 !important;
+    border: 1px solid rgba(255, 107, 53, 0.4) !important;
+}
+
+/* File Uploader Customization */
+[data-testid="stFileUploader"] {
+    background: #1b1d22;
+    border: 2px dashed rgba(255, 107, 53, 0.3);
+    border-radius: 14px;
+    padding: 14px;
 }
 </style>
 """
-st.markdown(STUDIO_CSS, unsafe_allow_html=True)
+st.markdown(BESPOKE_THEME_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# Studio Top Banner
+# Top Navigation Header
 # -----------------------------------------------------------------------------
 st.markdown(
     """
-    <div class="forge-header">
-        <div class="forge-status-row">
-            <span class="engine-chip">⚡ Pipeline Engine v2.0</span>
-            <span class="pydantic-badge">🛡️ Pydantic Type-Safe Validator</span>
-            <span class="engine-chip" style="color: #cbd5e1; border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);">🔒 Non-Destructive In-Memory</span>
+    <div class="studio-nav">
+        <div class="studio-brand">
+            <div class="studio-logo">◈</div>
+            <div class="studio-title-block">
+                <h1>PydanClean Studio</h1>
+                <p>Enterprise CSV Sanitization & Pydantic Schema Validation Suite</p>
+            </div>
         </div>
-        <h1 class="forge-title">DataForge Studio</h1>
-        <p class="forge-subtitle">
-            Enterprise CSV sanitization, ghost whitespace pruning, Pydantic type-safe schema validation, and interactive audit reporting.
-        </p>
+        <div class="studio-tags">
+            <span class="status-chip chip-flame">⚡ Pydantic v2 Engine</span>
+            <span class="status-chip chip-gold">🛡️ Type-Safe</span>
+            <span class="status-chip chip-muted">🔒 Safe In-Memory</span>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -210,90 +284,86 @@ st.markdown(
 
 
 # -----------------------------------------------------------------------------
-# Sidebar: Cleaning Engine & Pydantic Configuration
+# Sidebar Configuration Engine
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### ⚙️ Pipeline Configuration")
-    st.caption("Customize deduplication, text hygiene, and schema constraints.")
+    st.markdown("### 🛠️ Cleaning Pipeline Controls")
+    st.caption("Configure precision filtering, schema checks, and text hygiene.")
 
     with st.expander("🧹 1. Deduplication & Pruning", expanded=True):
         remove_empty = st.checkbox(
-            "Remove all-blank / whitespace rows",
+            "Prune all-blank / whitespace rows",
             value=True,
-            help="Purge rows where every single column is empty, NaN, or whitespace-only.",
+            help="Purge rows where all columns contain only empty strings, whitespace, or nulls.",
         )
         remove_duplicates = st.checkbox(
-            "Remove exact duplicate rows",
+            "Prune exact duplicate rows",
             value=True,
-            help="Eliminate identical records, preserving the first occurrence.",
+            help="Drop redundant duplicate records while keeping the initial entry.",
         )
 
     with st.expander("🛡️ 2. Pydantic Model Validation", expanded=True):
         validate_pydantic = st.checkbox(
-            "Enable Pydantic row validation",
+            "Enforce Pydantic schema validation",
             value=True,
-            help="Validate data against the ReviewRowModel schema and flag type inconsistencies.",
+            help="Validate customer review schemas via ReviewRowModel.",
         )
         enforce_rating_bounds = st.checkbox(
-            "Enforce Rating bounds [1.0 - 5.0]",
+            "Strict Rating bounds [1.0 - 5.0]",
             value=True,
-            help="Flag and purge records whose ratings are invalid or outside 1.0 - 5.0.",
+            help="Flag and purge records with ratings outside the range 1.0 to 5.0.",
         )
 
-    with st.expander("✨ 3. Text Sanitization", expanded=True):
+    with st.expander("✨ 3. Text Sanitization Rules", expanded=True):
         trim_whitespace = st.checkbox(
-            "Trim leading/trailing spaces",
+            "Trim leading & trailing spaces",
             value=True,
-            help="Strip whitespace from strings without mutating non-string types.",
+            help="Strip edge whitespace from all text columns.",
         )
         collapse_spaces = st.checkbox(
-            "Collapse multiple spaces / tabs",
+            "Collapse consecutive whitespace",
             value=True,
-            help="Replace repeated spaces and tab characters with a single space.",
+            help="Normalize multiple repeated spaces and tab characters to a single space.",
         )
         strip_html = st.checkbox(
             "Strip embedded HTML tags",
             value=True,
-            help="Remove tags like <p>, <br>, or <b> frequently found in web reviews.",
+            help="Clean tags such as <p>, <br>, or <div> from feedback comments.",
         )
 
     st.markdown("---")
-    st.markdown("### ℹ️ Engine Information")
-    st.caption(
-        "Built with **Python 3.12**, **Pandas**, and **Pydantic v2**. "
-        "Safe and memory-isolated."
-    )
+    st.caption("PydanClean Studio • Built with Python 3.12, Pandas, and Pydantic v2")
 
 
 # -----------------------------------------------------------------------------
-# File Ingestion & Demo Data Loader
+# Ingestion Strip & Demo Loader
 # -----------------------------------------------------------------------------
-col_uploader, col_demo_actions = st.columns([3, 1])
+col_upload, col_quick_actions = st.columns([3, 1])
 
-with col_uploader:
+with col_upload:
     uploaded_file = st.file_uploader(
-        "Upload Customer Reviews (.csv)",
+        "Upload Customer Reviews CSV",
         type=["csv"],
-        help="Upload any standard CSV file containing review or customer feedback data.",
+        help="Upload any CSV file to clean and validate.",
     )
 
-with col_demo_actions:
+with col_quick_actions:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    demo_clicked = st.button("⚡ Load Demo Reviews", use_container_width=True, help="Load messy sample dataset (16 rows)")
-    reset_clicked = st.button("🔄 Reset Workspace", use_container_width=True)
+    demo_btn = st.button("◈ Load Demo Reviews", use_container_width=True, help="Load messy sample reviews (16 rows)")
+    reset_btn = st.button("↺ Reset Studio", use_container_width=True)
 
 if "active_demo" not in st.session_state:
     st.session_state.active_demo = False
 
-if demo_clicked:
+if demo_btn:
     st.session_state.active_demo = True
-    st.toast("Loaded sample customer reviews dataset!", icon="⚡")
+    st.toast("Loaded sample customer review dataset!", icon="◈")
 
-if reset_clicked:
+if reset_btn:
     st.session_state.active_demo = False
     st.rerun()
 
-# Resolve Active Dataset
+# Determine active dataset
 active_df: pd.DataFrame | None = None
 source_name = ""
 
@@ -302,7 +372,7 @@ if uploaded_file is not None:
         active_df = pd.read_csv(uploaded_file)
         source_name = uploaded_file.name
     except Exception as exc:
-        st.error(f"⚠️ Error reading CSV: {exc}")
+        st.error(f"Failed to parse CSV file: {exc}")
         st.stop()
 elif st.session_state.active_demo:
     sample_file = Path("data/sample_reviews.csv")
@@ -314,34 +384,34 @@ elif st.session_state.active_demo:
 
 
 # -----------------------------------------------------------------------------
-# Dynamic Column Scope Configuration
+# Dynamic Column Settings (Sidebar)
 # -----------------------------------------------------------------------------
 key_columns: list[str] = []
 required_col: str | None = None
 
 if active_df is not None:
     with st.sidebar:
-        with st.expander("🎯 4. Column Scope (Optional)", expanded=False):
+        with st.expander("🎯 4. Target Column Scopes", expanded=False):
             key_columns = st.multiselect(
-                "Deduplicate by specific key columns:",
+                "Deduplicate on key columns only:",
                 options=list(active_df.columns),
                 default=[],
-                help="If selected, duplicates are matched only against these columns. Leave blank for all columns.",
+                help="Evaluate duplicates only on the chosen columns.",
             )
             selected_req = st.selectbox(
-                "Require non-empty value in:",
+                "Mandatory non-empty column:",
                 options=["(None)"] + list(active_df.columns),
                 index=0,
-                help="Purge rows where this specific column is empty or whitespace.",
+                help="Drop rows if this column is blank.",
             )
             required_col = selected_req if selected_req != "(None)" else None
 
 
 # -----------------------------------------------------------------------------
-# Processing Engine & Visual Dashboard
+# Main Processing & Display
 # -----------------------------------------------------------------------------
 if active_df is not None:
-    # Build options
+    # Configure pipeline options
     pipeline_options = CleaningOptions(
         remove_empty_rows=remove_empty,
         remove_duplicates=remove_duplicates,
@@ -354,241 +424,239 @@ if active_df is not None:
         required_column=required_col,
     )
 
-    # Execute cleaning pipeline
+    # Process data
     cleaned_df, removed_df, stats = audit_cleaning(active_df, pipeline_options)
 
     # -------------------------------------------------------------------------
-    # Bento Metric KPI Cards
+    # Executive Metric Ribbon
     # -------------------------------------------------------------------------
-    k1, k2, k3, k4 = st.columns(4)
-
-    with k1:
-        st.markdown(
-            f"""
-            <div class="bento-card">
-                <div class="bento-label">Raw Records</div>
-                <div class="bento-value">{stats.original_rows:,}</div>
-                <div class="bento-footer"><span class="tag-cyan">●</span> {len(active_df.columns)} columns detected</div>
+    st.markdown(
+        f"""
+        <div class="metric-ribbon">
+            <div class="metric-node">
+                <div class="node-label">Raw Ingestion</div>
+                <div class="node-value">{stats.original_rows:,}</div>
+                <div class="node-sub text-gold">{len(active_df.columns)} Columns Detected</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with k2:
-        st.markdown(
-            f"""
-            <div class="bento-card">
-                <div class="bento-label">Clean Retained</div>
-                <div class="bento-value">{stats.cleaned_rows:,}</div>
-                <div class="bento-footer"><span class="tag-emerald">↑</span> {stats.retention_rate:.1f}% dataset retention</div>
+            <div class="metric-node">
+                <div class="node-label">Clean Retained</div>
+                <div class="node-value">{stats.cleaned_rows:,}</div>
+                <div class="node-sub text-green">✓ {stats.retention_rate:.1f}% Yield Retained</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with k3:
-        st.markdown(
-            f"""
-            <div class="bento-card">
-                <div class="bento-label">Purged Records</div>
-                <div class="bento-value">{stats.removed_rows:,}</div>
-                <div class="bento-footer"><span class="tag-rose">↓</span> {stats.removed_rows} rows sanitized</div>
+            <div class="metric-node">
+                <div class="node-label">Purged Rows</div>
+                <div class="node-value">{stats.removed_rows:,}</div>
+                <div class="node-sub text-rose">✕ {stats.removed_rows} Records Cleaned</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with k4:
-        score_tag = "tag-emerald" if stats.data_quality_score >= 80 else ("tag-cyan" if stats.data_quality_score >= 60 else "tag-rose")
-        st.markdown(
-            f"""
-            <div class="bento-card">
-                <div class="bento-label">Quality Score</div>
-                <div class="bento-value">{stats.data_quality_score:.0f}<span style="font-size:1.1rem; color:#64748b;">/100</span></div>
-                <div class="bento-footer"><span class="{score_tag}">●</span> Pydantic integrity verified</div>
+            <div class="metric-node">
+                <div class="node-label">Pydantic Health</div>
+                <div class="node-value">{stats.data_quality_score:.0f}<span style="font-size:1rem; color:#6B7280;">/100</span></div>
+                <div class="node-sub text-flame">● Schema Integrity High</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
-
-    # -------------------------------------------------------------------------
-    # Quick Export Toolbar
-    # -------------------------------------------------------------------------
-    stem = Path(source_name).stem if source_name else "dataset"
-    btn1, btn2, btn3, btn4 = st.columns(4)
-
-    with btn1:
-        st.download_button(
-            "⬇️ Download Cleaned CSV",
-            data=dataframe_to_csv_bytes(cleaned_df),
-            file_name=f"{stem}_cleaned.csv",
-            mime="text/csv",
-            type="primary",
-            use_container_width=True,
-        )
-    with btn2:
-        st.download_button(
-            "📄 Export Cleaned JSON",
-            data=dataframe_to_json_bytes(cleaned_df),
-            file_name=f"{stem}_cleaned.json",
-            mime="application/json",
-            use_container_width=True,
-        )
-    with btn3:
-        if not removed_df.empty:
-            st.download_button(
-                "🛡️ Download Removed Audit CSV",
-                data=dataframe_to_csv_bytes(removed_df),
-                file_name=f"{stem}_removed_audit.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-        else:
-            st.button("🛡️ Download Removed Audit CSV", disabled=True, use_container_width=True)
-    with btn4:
-        report_md = generate_markdown_audit_report(stats, source_name)
-        st.download_button(
-            "📝 Download Audit Report (.md)",
-            data=report_md.encode("utf-8"),
-            file_name=f"{stem}_audit_report.md",
-            mime="text/markdown",
-            use_container_width=True,
-        )
-
-    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # -------------------------------------------------------------------------
-    # Workspace Tabs
+    # Studio Tabs
     # -------------------------------------------------------------------------
-    tab_analytics, tab_diff, tab_audit, tab_report = st.tabs(
+    tab_workbench, tab_schema, tab_analytics, tab_export = st.tabs(
         [
-            "📊 Studio Analytics",
-            "🔬 Diff & Inspection Matrix",
-            f"🛡️ Pydantic & Removed Log ({stats.removed_rows})",
-            "📜 Executive Audit Report",
+            "📁 Unified Data Workbench",
+            "🛡️ Pydantic Schema Diagnostics",
+            "📊 Quality & Yield Analytics",
+            "📦 Export & Audit Center",
         ]
     )
 
-    # TAB 1: Studio Analytics
-    with tab_analytics:
-        col_flow, col_reasons = st.columns(2)
+    # TAB 1: Unified Data Workbench
+    with tab_workbench:
+        st.markdown("#### 📁 Interactive Data Workbench")
+        filter_col, mode_col, limit_col = st.columns([2, 1.2, 1])
 
-        with col_flow:
-            st.markdown("##### 📈 Dataset Flow Breakdown")
-            chart_df = pd.DataFrame(
+        with mode_col:
+            view_mode = st.radio(
+                "Display Slice:",
+                options=["Clean Records", "Purged Audit", "Raw Input"],
+                horizontal=True,
+            )
+
+        with filter_col:
+            search_query = st.text_input("🔍 Live Search Filter:", placeholder="Search by customer, rating, or text...")
+
+        with limit_col:
+            row_limit = st.slider("Display Limit:", min_value=5, max_value=min(100, max(10, stats.original_rows)), value=min(15, stats.original_rows))
+
+        # Select data slice
+        if view_mode == "Clean Records":
+            target_slice = cleaned_df.copy()
+            slice_title = f"Clean Records ({len(cleaned_df)} total)"
+        elif view_mode == "Purged Audit":
+            target_slice = removed_df.copy()
+            slice_title = f"Purged Audit Records ({len(removed_df)} total)"
+        else:
+            target_slice = active_df.copy()
+            slice_title = f"Raw Ingestion Records ({len(active_df)} total)"
+
+        if search_query.strip():
+            q = search_query.strip().lower()
+            mask = target_slice.astype(str).apply(lambda row: row.str.lower().str.contains(q, regex=False)).any(axis=1)
+            target_slice = target_slice[mask]
+
+        st.caption(f"Showing **{slice_title}** • {len(target_slice)} rows matching filter")
+        st.dataframe(target_slice.head(row_limit), use_container_width=True)
+
+    # TAB 2: Pydantic Schema Diagnostics
+    with tab_schema:
+        st.markdown("#### 🛡️ Pydantic v2 Schema Constraints & Error Inspector")
+        st.caption("Records are checked against the following type-safe specifications:")
+
+        col_rules_left, col_rules_right = st.columns(2)
+
+        with col_rules_left:
+            st.markdown(
+                """
+                <div class="rule-card">
+                    <div class="rule-header"><span>1. review_id</span><span class="text-flame">string / optional</span></div>
+                    <div class="rule-body">Strips whitespace; casts empty values and 'nan' strings to None.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-header"><span>2. customer_name</span><span class="text-gold">string (Title Case)</span></div>
+                    <div class="rule-body">Normalizes names and standardizes capitalization automatically.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-header"><span>3. rating</span><span class="text-green">float [1.0 - 5.0]</span></div>
+                    <div class="rule-body">Numeric coercion; enforces valid ratings within 1.0 to 5.0 bounds.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with col_rules_right:
+            st.markdown(
+                """
+                <div class="rule-card">
+                    <div class="rule-header"><span>4. review_text</span><span class="text-flame">sanitized text</span></div>
+                    <div class="rule-body">Strips HTML tags (<p>, <br>, etc.) and collapses repeated whitespace.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-header"><span>5. review_date</span><span class="text-gold">string / date</span></div>
+                    <div class="rule-body">Trims surrounding spaces and verifies string date formats.</div>
+                </div>
+                <div class="rule-card">
+                    <div class="rule-header"><span>6. Row Completeness</span><span class="text-rose">anti-ghost rule</span></div>
+                    <div class="rule-body">Purges records where every field evaluates to empty or space-only.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("##### 🔍 Detected Purge & Validation Exceptions")
+        if not removed_df.empty:
+            st.dataframe(removed_df[["removal_reason"] + [c for c in removed_df.columns if c != "removal_reason"]], use_container_width=True)
+        else:
+            st.success("No validation errors or purge exceptions were triggered!")
+
+    # TAB 3: Quality & Yield Analytics
+    with tab_analytics:
+        st.markdown("#### 📊 Quality Metrics & Distribution Profiling")
+        chart_c1, chart_c2 = st.columns(2)
+
+        with chart_c1:
+            st.markdown("##### 📈 Yield Breakdown")
+            yield_data = pd.DataFrame(
                 {
-                    "Status": ["Clean Retained", "Purged Records"],
+                    "Category": ["Clean Retained", "Purged Rows"],
                     "Count": [stats.cleaned_rows, stats.removed_rows],
                 }
             )
-            st.bar_chart(chart_df, x="Status", y="Count", color="Status", use_container_width=True)
+            st.bar_chart(yield_data, x="Category", y="Count", color="Category", use_container_width=True)
 
-        with col_reasons:
-            st.markdown("##### 🔍 Removal Breakdown by Reason")
+        with chart_c2:
+            st.markdown("##### 🔍 Removal Breakdown by Category")
             if stats.removal_breakdown:
                 reasons_df = pd.DataFrame(
-                    [{"Reason": k, "Rows": v} for k, v in stats.removal_breakdown.items()]
+                    [{"Reason": k, "Count": v} for k, v in stats.removal_breakdown.items()]
                 )
-                st.bar_chart(reasons_df, x="Reason", y="Rows", color="#f43f5e", use_container_width=True)
+                st.bar_chart(reasons_df, x="Reason", y="Count", color="#FF6B35", use_container_width=True)
             else:
-                st.success("✅ Zero records purged! The entire dataset satisfied all quality constraints.")
+                st.info("No records removed; all rows met the quality threshold.")
 
-        # Rating Distribution if rating column exists
+        # Ratings histogram
         rating_col = next((c for c in cleaned_df.columns if "rating" in c.lower() or "score" in c.lower() or "star" in c.lower()), None)
         if rating_col:
             st.markdown("##### ⭐ Star Rating Distribution (Clean Dataset)")
-            r1, r2 = st.columns([2, 1])
-            with r1:
-                r_counts = cleaned_df[rating_col].value_counts().sort_index().reset_index()
-                r_counts.columns = ["Rating", "Reviews"]
-                st.bar_chart(r_counts, x="Rating", y="Reviews", color="#10b981", use_container_width=True)
-            with r2:
-                numeric_r = pd.to_numeric(cleaned_df[rating_col], errors="coerce").dropna()
-                if not numeric_r.empty:
-                    st.metric("Average Rating", f"{numeric_r.mean():.2f} / 5.0")
-                    st.metric("5-Star Reviews", f"{(numeric_r == 5).sum():,}")
-                    st.metric("Critical Reviews (≤ 2)", f"{(numeric_r <= 2).sum():,}")
+            r_left, r_right = st.columns([2, 1])
+            with r_left:
+                rating_counts = cleaned_df[rating_col].value_counts().sort_index().reset_index()
+                rating_counts.columns = ["Rating", "Count"]
+                st.bar_chart(rating_counts, x="Rating", y="Count", color="#FF8A50", use_container_width=True)
+            with r_right:
+                numeric_ratings = pd.to_numeric(cleaned_df[rating_col], errors="coerce").dropna()
+                if not numeric_ratings.empty:
+                    st.metric("Average Rating", f"{numeric_ratings.mean():.2f} / 5.0")
+                    st.metric("5-Star Reviews", f"{(numeric_ratings == 5).sum():,}")
+                    st.metric("Critical (≤ 2.0)", f"{(numeric_ratings <= 2).sum():,}")
 
-    # TAB 2: Diff & Inspection Matrix
-    with tab_diff:
-        st.markdown("##### 🔬 Side-by-Side Data Matrix")
-        search_kw = st.text_input("🔍 Live Keyword Filter:", placeholder="Search by customer, review text, or rating...")
-        limit_rows = st.slider("Rows to Preview:", min_value=5, max_value=min(100, max(10, stats.original_rows)), value=min(15, stats.original_rows))
+    # TAB 4: Export & Audit Center
+    with tab_export:
+        st.markdown("#### 📦 Export Center & Compliance Documentation")
+        stem = Path(source_name).stem if source_name else "dataset"
 
-        orig_view = active_df.copy()
-        clean_view = cleaned_df.copy()
+        e1, e2, e3 = st.columns(3)
+        with e1:
+            st.download_button(
+                "⬇️ Download Cleaned CSV",
+                data=dataframe_to_csv_bytes(cleaned_df),
+                file_name=f"{stem}_clean.csv",
+                mime="text/csv",
+                type="primary",
+                use_container_width=True,
+            )
+        with e2:
+            st.download_button(
+                "📄 Export Cleaned JSON",
+                data=dataframe_to_json_bytes(cleaned_df),
+                file_name=f"{stem}_clean.json",
+                mime="application/json",
+                use_container_width=True,
+            )
+        with e3:
+            if not removed_df.empty:
+                st.download_button(
+                    "🛡️ Export Purged Audit CSV",
+                    data=dataframe_to_csv_bytes(removed_df),
+                    file_name=f"{stem}_purged_audit.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            else:
+                st.button("🛡️ Export Purged Audit CSV", disabled=True, use_container_width=True)
 
-        if search_kw.strip():
-            kw = search_kw.strip().lower()
-            orig_view = orig_view[orig_view.astype(str).apply(lambda row: row.str.lower().str.contains(kw, regex=False)).any(axis=1)]
-            clean_view = clean_view[clean_view.astype(str).apply(lambda row: row.str.lower().str.contains(kw, regex=False)).any(axis=1)]
-
-        c_left, c_right = st.columns(2)
-        with c_left:
-            st.markdown(f"**Original Dataset** (`{len(orig_view)}` matching rows)")
-            st.dataframe(orig_view.head(limit_rows), use_container_width=True)
-
-        with c_right:
-            st.markdown(f"**Cleaned Dataset** (`{len(clean_view)}` matching rows)")
-            st.dataframe(clean_view.head(limit_rows), use_container_width=True)
-
-    # TAB 3: Pydantic Validation & Audit Log
-    with tab_audit:
-        st.markdown("##### 🛡️ Audit Table of Purged Records")
-        if not removed_df.empty:
-            st.caption("Each purged row below includes the exact reason it failed quality or schema constraints.")
-            st.dataframe(removed_df, use_container_width=True)
-        else:
-            st.info("✨ No records were purged. Your dataset satisfies all quality constraints.")
-
-    # TAB 4: Executive Audit Report
-    with tab_report:
-        st.markdown(report_md)
+        st.markdown("---")
+        st.markdown("##### 📝 Executive Markdown Audit Report")
+        audit_md = generate_markdown_audit_report(stats, source_name)
+        st.download_button(
+            "📋 Download Full Audit Report (.md)",
+            data=audit_md.encode("utf-8"),
+            file_name=f"{stem}_audit_report.md",
+            mime="text/markdown",
+            use_container_width=False,
+        )
+        with st.expander("Preview Audit Report", expanded=True):
+            st.markdown(audit_md)
 
 else:
-    # Empty State Guide Cards
-    st.markdown("### 🚀 Get Started")
+    # Initial State Guide
     st.markdown(
         """
-        Upload your customer reviews CSV using the file uploader above, or click **⚡ Load Demo Reviews** to run with sample data.
-        """
+        <div style="background: #1b1d22; border: 1px dashed rgba(255, 107, 53, 0.4); border-radius: 14px; padding: 36px; text-align: center;">
+            <h3 style="color: #FFFFFF; margin-bottom: 8px;">Ready for Ingestion</h3>
+            <p style="color: #9EACB9; max-width: 650px; margin: 0 auto 20px auto; font-size: 0.95rem;">
+                Upload your customer reviews CSV or click <strong>◈ Load Demo Reviews</strong> to inspect how Pydantic v2 cleans whitespace, eliminates duplicates, and validates schema constraints.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    g1, g2, g3 = st.columns(3)
-    with g1:
-        st.markdown(
-            """
-            <div class="bento-card">
-                <div class="bento-label">1. Automatic Sanitization</div>
-                <p style="color:#cbd5e1; font-size:0.92rem;">
-                    Identifies ghost whitespace, empty rows, and redundant duplicate rows across any CSV schema.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with g2:
-        st.markdown(
-            """
-            <div class="bento-card">
-                <div class="bento-label">2. Pydantic v2 Integrity</div>
-                <p style="color:#cbd5e1; font-size:0.92rem;">
-                    Validates customer names, rating bounds (1.0 to 5.0), and strips embedded HTML tags automatically.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with g3:
-        st.markdown(
-            """
-            <div class="bento-card">
-                <div class="bento-label">3. Audit & Multi-Export</div>
-                <p style="color:#cbd5e1; font-size:0.92rem;">
-                    Export cleaned records in CSV or JSON, review purged records with reasons, and download an audit report.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
