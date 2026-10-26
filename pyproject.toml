@@ -1,0 +1,25 @@
+[project]
+name = "csv-cleaner"
+version = "0.1.0"
+description = "CSV Cleaning Script with retry mechanism and unit tests"
+readme = "README.md"
+authors = [
+    { name = "Junior AI Engineer", email = "engineer@amplework.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = ["test_*.py"]

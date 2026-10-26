@@ -1,0 +1,17 @@
+review_id,customer_name,rating,review_text,review_date
+101,John Doe,5,Excellent quality and fast delivery!,2026-01-15
+102,Jane Smith,4,Product is good but packaging was slightly damaged.,2026-01-16
+,,,,
+103,Robert Brown,1,Item arrived broken. Very disappointed.,2026-01-17
+101,John Doe,5,Excellent quality and fast delivery!,2026-01-15
+104,Emily Davis,5,Amazing customer support team.,2026-01-18
+   ,  ,   ,    ,  
+105,Michael Wilson,3,Average experience. Nothing special.,2026-01-19
+  , 	 ,   , 	  , 
+105,Michael Wilson,3,Average experience. Nothing special.,2026-01-19
+106,Sarah Connor,4,,2026-01-20
+107,David Clark,2,Shipping took over three weeks.,2026-01-21
+,,,,
+108,Laura Adams,5,Exceeded my expectations.,2026-01-22
+108,Laura Adams,5,Exceeded my expectations.,2026-01-22
+109,James Miller,4,Good value for the price.,2026-01-23
