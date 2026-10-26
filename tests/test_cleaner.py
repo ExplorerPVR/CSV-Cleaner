@@ -1,13 +1,23 @@
-"""Unit tests for cleaner and retry utilities."""
+"""Unit tests for cleaner, retry utilities, and Pydantic models."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pandas as pd
+from pydantic import ValidationError
 import pytest
 
-from src.cleaner import clean_reviews, retry, save_cleaned_data
+from src.cleaner import (
+    audit_cleaning,
+    clean_reviews,
+    dataframe_to_csv_bytes,
+    dataframe_to_json_bytes,
+    generate_markdown_audit_report,
+    retry,
+    save_cleaned_data,
+)
+from src.models import CleaningOptions, ReviewRowModel
 
 
 # ============================================================================
@@ -182,3 +192,74 @@ def test_end_to_end_sample_reviews_cleaning(tmp_path: Path) -> None:
 
     reloaded = pd.read_csv(out_csv)
     assert len(reloaded) == 9
+
+
+# ============================================================================
+# Pydantic Model & Audit Pipeline Tests
+# ============================================================================
+
+def test_pydantic_review_model_sanitization() -> None:
+    """Test that ReviewRowModel validates and sanitizes input data."""
+    raw_data = {
+        "review_id": " 501 ",
+        "customer_name": "  john doe  ",
+        "rating": "4.5",
+        "review_text": "<p>Great item!   Fast shipping. </p>",
+        "review_date": " 2026-03-01 ",
+    }
+    model = ReviewRowModel.model_validate(raw_data)
+    assert model.review_id == "501"
+    assert model.customer_name == "John Doe"  # Formatted to Title Case
+    assert model.rating == 4.5
+    assert model.review_text == "Great item! Fast shipping."  # HTML stripped and spaces collapsed
+    assert model.review_date == "2026-03-01"
+
+
+def test_pydantic_invalid_rating_raises_error() -> None:
+    """Test that ratings outside [1.0, 5.0] or non-numeric ratings raise ValidationError."""
+    with pytest.raises(ValidationError):
+        ReviewRowModel.model_validate({"review_id": "1", "rating": 6.0})
+
+    with pytest.raises(ValidationError):
+        ReviewRowModel.model_validate({"review_id": "1", "rating": -1})
+
+
+def test_audit_cleaning_pipeline_with_stats() -> None:
+    """Test advanced audit_cleaning with removal reasons and statistics."""
+    df = pd.DataFrame(
+        [
+            {"review_id": "1", "customer_name": "Alice", "rating": 5, "review_text": "Good"},
+            {"review_id": " ", "customer_name": " ", "rating": None, "review_text": " "},
+            {"review_id": "1", "customer_name": "Alice", "rating": 5, "review_text": "Good"},  # Duplicate
+            {"review_id": "2", "customer_name": "Bob", "rating": 4, "review_text": "<b>Nice</b>"},
+        ]
+    )
+    options = CleaningOptions(
+        remove_empty_rows=True,
+        remove_duplicates=True,
+        strip_html=True,
+        validate_with_pydantic=True,
+    )
+    cleaned_df, removed_df, stats = audit_cleaning(df, options)
+
+    assert len(cleaned_df) == 2
+    assert len(removed_df) == 2
+    assert stats.original_rows == 4
+    assert stats.cleaned_rows == 2
+    assert stats.removed_rows == 2
+    assert "removal_reason" in removed_df.columns
+
+    report_md = generate_markdown_audit_report(stats, "test.csv")
+    assert "Data Quality & Cleaning Audit Report" in report_md
+
+
+def test_dataframe_serialization_bytes() -> None:
+    """Test CSV and JSON byte serialization for downloads."""
+    df = pd.DataFrame([{"a": 1, "b": "hello"}])
+    csv_bytes = dataframe_to_csv_bytes(df)
+    json_bytes = dataframe_to_json_bytes(df)
+
+    assert isinstance(csv_bytes, bytes)
+    assert b"a,b" in csv_bytes
+    assert isinstance(json_bytes, bytes)
+    assert b'"hello"' in json_bytes

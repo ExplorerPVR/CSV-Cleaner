@@ -1,17 +1,26 @@
-"""CSV cleaning utilities and resilience helpers."""
+"""CSV cleaning utilities, resilience helpers, and audit reporting engine."""
 
 from __future__ import annotations
 
 from functools import wraps
+from io import BytesIO
 import logging
 from pathlib import Path
+import re
 import time
 from typing import Any, Callable
 
 import pandas as pd
+from pydantic import ValidationError
+
+from src.models import CleaningOptions, CleaningStats, ReviewRowModel
 
 logger = logging.getLogger(__name__)
 
+
+# ============================================================================
+# Retry Decorator (Resilience)
+# ============================================================================
 
 def retry(
     func_or_retries: Any = None,
@@ -95,6 +104,10 @@ def retry(
     return decorator
 
 
+# ============================================================================
+# Core Assignment CSV Cleaning & Saving Functions
+# ============================================================================
+
 def clean_reviews(data: str | Path | pd.DataFrame) -> pd.DataFrame:
     """Read a CSV of customer reviews and return a cleaned copy.
 
@@ -169,9 +182,217 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str | Path) -> Path:
     return dest
 
 
-# Semantic aliases for clarity
+# Semantic aliases for assignment specification
 read_and_clean_reviews = clean_reviews
 save_cleaned_reviews = save_cleaned_data
+
+
+# ============================================================================
+# Advanced Pipeline & Audit Engine (Web & Pydantic Integration)
+# ============================================================================
+
+def audit_cleaning(
+    dataframe: pd.DataFrame,
+    options: CleaningOptions | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, CleaningStats]:
+    """Execute deep cleaning with step-by-step auditing and Pydantic validation.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame, CleaningStats]
+        - cleaned_df: Sanitized records with reset index.
+        - removed_df: Audit table of all removed rows with 'removal_reason'.
+        - stats: Statistical summary metrics and quality score.
+    """
+    if options is None:
+        options = CleaningOptions()
+
+    total_orig = len(dataframe)
+    working = dataframe.copy()
+    removal_map: dict[int, str] = {}
+
+    def _cell_is_blank(v: Any) -> bool:
+        if pd.isna(v):
+            return True
+        if isinstance(v, str) and v.strip() == "":
+            return True
+        return False
+
+    # 1. Identify completely empty / whitespace-only rows
+    if options.remove_empty_rows:
+        blank_mask = working.map(_cell_is_blank).all(axis=1)
+        for idx in working[blank_mask].index:
+            removal_map[idx] = "Completely empty or whitespace-only row"
+
+    # 2. Check required column constraint
+    if options.required_column and options.required_column in working.columns:
+        req_col = options.required_column
+        req_missing = working[req_col].map(_cell_is_blank)
+        for idx in working[req_missing].index:
+            if idx not in removal_map:
+                removal_map[idx] = f"Missing required value in column: '{req_col}'"
+
+    # 3. Identify duplicate rows (evaluated among non-empty rows)
+    if options.remove_duplicates:
+        candidate_indices = [i for i in working.index if i not in removal_map]
+        subset = options.key_columns if options.key_columns else None
+        candidates = working.loc[candidate_indices]
+        dup_mask = candidates.duplicated(subset=subset, keep="first")
+        for idx in candidates[dup_mask].index:
+            scope = f"in keys [{', '.join(subset)}]" if subset else "across all columns"
+            removal_map[idx] = f"Exact duplicate record ({scope})"
+
+    # 4. Optional Text-level Sanitization on remaining rows
+    active_indices = [i for i in working.index if i not in removal_map]
+    str_cols = working.select_dtypes(include=["object", "string"]).columns
+
+    for col in str_cols:
+        series = working.loc[active_indices, col]
+        if options.strip_html:
+            series = series.apply(
+                lambda x: re.sub(r"<[^>]+>", "", str(x)) if pd.notna(x) else x
+            )
+        if options.collapse_spaces:
+            series = series.apply(
+                lambda x: re.sub(r"\s+", " ", str(x)).strip() if pd.notna(x) else x
+            )
+        elif options.trim_whitespace:
+            series = series.apply(
+                lambda x: x.strip() if isinstance(x, str) else x
+            )
+        working.loc[active_indices, col] = series
+
+    # 5. Optional Pydantic Schema Validation
+    if options.validate_with_pydantic:
+        col_names = {c.lower().replace(" ", "_"): c for c in working.columns}
+
+        # Check if dataset has customer review-like columns
+        id_col = col_names.get("review_id") or col_names.get("id")
+        name_col = col_names.get("customer_name") or col_names.get("name") or col_names.get("customer")
+        rating_col = col_names.get("rating") or col_names.get("stars") or col_names.get("score")
+        text_col = col_names.get("review_text") or col_names.get("comment") or col_names.get("review") or col_names.get("text")
+        date_col = col_names.get("review_date") or col_names.get("date")
+
+        for idx in active_indices:
+            row_dict = {
+                "review_id": working.at[idx, id_col] if id_col else None,
+                "customer_name": working.at[idx, name_col] if name_col else None,
+                "rating": working.at[idx, rating_col] if rating_col else None,
+                "review_text": working.at[idx, text_col] if text_col else None,
+                "review_date": working.at[idx, date_col] if date_col else None,
+            }
+
+            try:
+                # Validate with Pydantic
+                ReviewRowModel.model_validate(row_dict)
+            except ValidationError as err:
+                error_messages = [e["msg"] for e in err.errors()]
+                summary_err = "; ".join(error_messages)
+                if options.enforce_rating_bounds and "Rating" in summary_err:
+                    removal_map[idx] = f"Pydantic Validation Error: {summary_err}"
+                elif "completely empty" in summary_err:
+                    removal_map[idx] = "Pydantic Schema: Row has no usable fields"
+
+    # Separate Cleaned and Removed sets
+    removed_indices = sorted(removal_map.keys())
+    cleaned_indices = [i for i in working.index if i not in removal_map]
+
+    cleaned_df = working.loc[cleaned_indices].copy().reset_index(drop=True)
+
+    if removed_indices:
+        removed_df = dataframe.loc[removed_indices].copy()
+        removed_df.insert(0, "removal_reason", [removal_map[i] for i in removed_indices])
+        removed_df = removed_df.reset_index(drop=True)
+    else:
+        removed_df = dataframe.iloc[0:0].copy()
+        removed_df.insert(0, "removal_reason", [])
+
+    # Calculate statistics
+    total_clean = len(cleaned_df)
+    total_removed = len(removed_indices)
+    retention_rate = (total_clean / total_orig * 100.0) if total_orig > 0 else 100.0
+    quality_score = max(0.0, min(100.0, retention_rate))
+
+    removal_breakdown: dict[str, int] = {}
+    if not removed_df.empty:
+        for reason, count in removed_df["removal_reason"].value_counts().items():
+            removal_breakdown[str(reason)] = int(count)
+
+    null_counts: dict[str, int] = {
+        col: int(cleaned_df[col].isna().sum()) for col in cleaned_df.columns
+    }
+
+    stats = CleaningStats(
+        original_rows=total_orig,
+        cleaned_rows=total_clean,
+        removed_rows=total_removed,
+        retention_rate=round(retention_rate, 2),
+        data_quality_score=round(quality_score, 1),
+        removal_breakdown=removal_breakdown,
+        column_null_counts=null_counts,
+    )
+
+    return cleaned_df, removed_df, stats
+
+
+def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
+    """Serialize a DataFrame as UTF-8 CSV bytes."""
+    return df.to_csv(index=False).encode("utf-8")
+
+
+def dataframe_to_json_bytes(df: pd.DataFrame) -> bytes:
+    """Serialize a DataFrame as indented UTF-8 JSON bytes."""
+    return df.to_json(orient="records", indent=2, force_ascii=False).encode("utf-8")
+
+
+def generate_markdown_audit_report(stats: CleaningStats, filename: str = "dataset.csv") -> str:
+    """Generate a formatted markdown data quality audit report."""
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    breakdown_lines = (
+        "\n".join(f"- **{reason}**: `{count}` row(s)" for reason, count in stats.removal_breakdown.items())
+        if stats.removal_breakdown
+        else "- *No records removed (all rows satisfied quality constraints).*"
+    )
+
+    null_lines = "\n".join(
+        f"| `{col}` | {count} |" for col, count in stats.column_null_counts.items()
+    )
+
+    return f"""# 🛡️ Data Quality & Cleaning Audit Report
+
+**Processed File:** `{filename}`  
+**Audit Timestamp:** `{now_str}`  
+**Pipeline Engine:** `CSV-Cleaner Pro with Pydantic Validation`  
+
+---
+
+## 1. Executive Summary
+
+| Metric | Value |
+| :--- | :--- |
+| **Initial Records** | **{stats.original_rows:,}** |
+| **Clean Records Retained** | **{stats.cleaned_rows:,}** |
+| **Purged Records** | **{stats.removed_rows:,}** |
+| **Dataset Retention Rate** | **{stats.retention_rate}%** |
+| **Overall Quality Score** | **{stats.data_quality_score} / 100** |
+
+---
+
+## 2. Removal Breakdown & Reasoning
+
+{breakdown_lines}
+
+---
+
+## 3. Clean Dataset Column Null Profile
+
+| Column Name | Remaining Nulls |
+| :--- | :--- |
+{null_lines}
+
+---
+*Report generated automatically by CSV-Cleaner Studio.*
+"""
 
 
 if __name__ == "__main__":
@@ -188,4 +409,3 @@ if __name__ == "__main__":
     cleaned = clean_reviews(input_file)
     saved_path = save_cleaned_data(cleaned, output_file)
     print(f"--> Success! {len(cleaned)} cleaned rows written to: {saved_path}")
-
