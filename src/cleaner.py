@@ -344,7 +344,7 @@ def audit_cleaning(
 
 def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
     """Serialize a DataFrame as UTF-8 CSV bytes."""
-    return df.to_csv(index=False).encode("utf-8")
+    return df.to_csv("output.csv", index=False, encoding="utf-8")
 
 
 def dataframe_to_json_bytes(df: pd.DataFrame) -> bytes:
