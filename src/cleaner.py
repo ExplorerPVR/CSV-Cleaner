@@ -108,6 +108,15 @@ def retry(
 # Core Assignment CSV Cleaning & Saving Functions
 # ============================================================================
 
+@retry(max_retries=3, delay=0.05, exceptions=(OSError, IOError))
+def read_csv_safely(file_path: str | Path) -> pd.DataFrame:
+    """Read a CSV file with automatic retry resilience against transient file locks."""
+    path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"CSV file not found: {path}")
+    return pd.read_csv(path)
+
+
 def clean_reviews(data: str | Path | pd.DataFrame) -> pd.DataFrame:
     """Read a CSV of customer reviews and return a cleaned copy.
 
@@ -127,10 +136,7 @@ def clean_reviews(data: str | Path | pd.DataFrame) -> pd.DataFrame:
         Cleaned customer reviews DataFrame with reset index.
     """
     if isinstance(data, (str, Path)):
-        csv_path = Path(data)
-        if not csv_path.exists():
-            raise FileNotFoundError(f"CSV file not found: {csv_path}")
-        df = pd.read_csv(csv_path)
+        df = read_csv_safely(data)
     elif isinstance(data, pd.DataFrame):
         df = data.copy()
     else:
@@ -157,8 +163,9 @@ def clean_reviews(data: str | Path | pd.DataFrame) -> pd.DataFrame:
     return cleaned_df
 
 
+@retry(max_retries=3, delay=0.05, exceptions=(OSError, IOError))
 def save_cleaned_data(df: pd.DataFrame, output_path: str | Path) -> Path:
-    """Save cleaned DataFrame to a new CSV file.
+    """Save cleaned DataFrame to a new CSV file with retry resilience.
 
     Parameters
     ----------

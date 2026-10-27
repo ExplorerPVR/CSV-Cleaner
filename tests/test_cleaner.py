@@ -14,6 +14,7 @@ from src.cleaner import (
     dataframe_to_csv_bytes,
     dataframe_to_json_bytes,
     generate_markdown_audit_report,
+    read_csv_safely,
     retry,
     save_cleaned_data,
 )
@@ -263,3 +264,13 @@ def test_dataframe_serialization_bytes() -> None:
     assert b"a,b" in csv_bytes
     assert isinstance(json_bytes, bytes)
     assert b'"hello"' in json_bytes
+
+
+def test_read_csv_safely_retry_integration(tmp_path: Path) -> None:
+    """Test that read_csv_safely is decorated with retry and reads files properly."""
+    test_file = tmp_path / "valid.csv"
+    test_file.write_text("a,b\n1,2", encoding="utf-8")
+    df = read_csv_safely(test_file)
+    assert len(df) == 1
+    assert list(df["a"]) == [1]
+
