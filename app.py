@@ -1,4 +1,4 @@
-"""PydanClean Studio - Modern CSV Sanitizer and Pydantic Schema Validation Suite."""
+"""dataforge Studio - Modern CSV Sanitizer and Pydantic Schema Validation Suite."""
 
 from __future__ import annotations
 
