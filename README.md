@@ -1,4 +1,4 @@
-# PydanClean Studio (CSV-Cleaner)
+# PydanClean Studio | Smart CSV & Pydantic Sanitizer
 
 An enterprise-grade, high-performance customer reviews CSV sanitization and schema validation suite powered by **Python 3.12**, **Pandas**, **Pydantic v2**, and **Streamlit**.
 
